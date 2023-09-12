@@ -81,7 +81,7 @@ class db_table:
         query                = "SELECT %s FROM %s" % (columns_query_string, self.name)
         # build where query string
         if where:
-            where_query_string = [ "%s = '%s'" % (k,v) for k,v in where.iteritems() ]
+            where_query_string = [ "%s = '%s'" % (k,v) for k,v in where.items() ]
             query             += " WHERE " + ' AND '.join(where_query_string)
         
         result = []
@@ -96,6 +96,61 @@ class db_table:
             for i in range(0, len(columns)):
                 result_row[columns[i]] = row[i]
             result.append(result_row)
+
+        return result
+
+    # Works smilar to the selct funtion above with some added capabilities.
+    # It returns a pretty version with no field names and has the fidls of each row seperated by a tab space
+    # Allows for where conditions with OR within the same fields 
+    # For example: SELECT * From agenda WHERE location = 'Room A' OR location = 'Room B'
+    def selectPrettyIn(self, columns = [], where= {}):
+        # by default, query all columns
+        if not columns:
+            columns = [ k for k in self.schema ]
+
+        # build query string
+        columns_query_string = ", ".join(columns)
+        query                = "SELECT %s FROM %s" % (columns_query_string, self.name)
+        # build where query string
+        if where:
+            where_query_string = ""
+            for k,v in where.items():
+                flag = True
+                for val in v:
+                    if flag:
+                        where_query_string =  "%s = '%s'" % (k,val)
+                        flag = False
+                    else:
+                        where_query_string =  where_query_string+" OR "+"%s = '%s'" % (k,val)
+            query += " WHERE " +' AND '.join([where_query_string])
+        result = ""
+
+        for row in self.db_conn.execute(query):
+            result_row = ""+row[0]
+            # convert from (val1, val2, val3) to { col1: val1, col2: val2, col3: val3 }
+            for i in range(1, len(columns)):
+                if(columns[i] == "session_or") and (row[i] != "Session"):
+                    result_row = result_row+"\t"+"Sub"
+                else:
+                    result_row = result_row+"\t"+row[i]
+            result = result+(result_row)+"\n\n"
+
+        return result
+    
+    # Similar to theriginal select method but only takesa single column input and gives a lost of values of that single column as the output
+    def selectValues(self, column = str, where = {}):
+        
+        query                  = "SELECT %s FROM %s" % (column, self.name)
+        # build where query string
+        if where:
+            where_query_string = [ "%s = '%s'" % (k,v) for k,v in where.items() ]
+            query             += " WHERE " + ' AND '.join(where_query_string)
+        
+        result = []
+
+        for row in self.db_conn.execute(query):
+            
+            result.append(row[0])
 
         return result
 
