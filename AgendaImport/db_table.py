@@ -48,7 +48,7 @@ class db_table:
     #
     def create_table(self):
         # { "id": "integer", "name": "text" } -> "id integer, name text"
-        columns_query_string = ', '.join([ "%s %s" % (k,v) for k,v in self.schema.iteritems() ])
+        columns_query_string = ', '.join([ "%s %s" % (k,v) for k,v in self.schema.items() ])
 
         # CREATE TABLE IF NOT EXISTS users (id integer PRIMARY KEY, name text)
         #
@@ -112,7 +112,7 @@ class db_table:
     def insert(self, item):
         # build columns & values queries
         columns_query = ", ".join(item.keys())
-        values_query  = ", ".join([ "'%s'" % v for v in item.values()])
+        values_query  = ", ".join([ "'%s'" % str(v).replace("'","''") for v in item.values()])
         #print(len(item.values()))
         #print(item["Speakers"])
         # INSERT INTO users(id, name) values (42, John)
